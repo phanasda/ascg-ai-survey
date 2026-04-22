@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ASCG AI Survey 2026</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
+  * { font-family: 'Sarabun', sans-serif; }
+  .fade-in { animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .tooltip { visibility:hidden; opacity:0; transition:opacity 0.15s; }
+  .has-tooltip:hover .tooltip { visibility:visible; opacity:1; }
+</style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+
+<!-- ════ CONFIG — แก้ตรงนี้อย่างเดียว ════ -->
+<script>
+  // 👇 วาง Web App URL จาก Google Apps Script ตรงนี้
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwybcP_xJ8aiVd6BUqkkT5PhG2HsAh19CUqCQM3szvxzW30x4rqlTRuQCYrnY1Nvb1v/exec";
+</script>
+<!-- ════════════════════════════════════════ -->
+
+<div id="app" class="max-w-2xl mx-auto px-4 py-8">
+
+  <!-- Header -->
+  <div class="text-center mb-8">
+    <div class="inline-flex items-center gap-2 bg-blue-600 text-white rounded-2xl px-5 py-2 mb-4">
+      <span class="font-black text-sm tracking-wide">ASCG GROUP</span>
+    </div>
+    <h1 class="text-2xl font-extrabold text-slate-800">แบบสอบถามการใช้ AI ในการทำงาน</h1>
+    <p class="text-slate-500 text-sm mt-1">AI Usage Assessment 2026 — ใช้เวลาประมาณ 10 นาที</p>
+  </div>
+
+  <!-- Progress -->
+  <div id="progressBar" class="flex items-center gap-1 mb-8">
+    <!-- Injected by JS -->
+  </div>
+
+  <!-- Form Card -->
+  <div id="formCard" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 fade-in">
+    <!-- Injected by JS -->
+  </div>
+
+  <!-- Nav Buttons -->
+  <div id="navButtons" class="flex gap-3 mt-5">
+    <!-- Injected by JS -->
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const UNITS = [
+  "Sale ASC","Recruit ASC","Sale APNS","Recruit APNS",
+  "Sale ONE Team","Recruit ONE Team",
+  "Accounting & Finance","Corporate HR",
+  "iServices (IT support & IT Project & Marketing)"
+];
+const LEVELS = ["Staff / Officer","Senior / Specialist","Supervisor / Asst. Manager","Manager / Senior Manager","Director / C-Level"];
+const AI_FREQ = ["ใช้เป็นประจำ (ทุกวัน)","ใช้บ้างบางครั้ง (สัปดาห์ละ 1–3 ครั้ง)","นานๆ ครั้ง (เดือนละ 1–3 ครั้ง)","ยังไม่ได้ใช้ แต่สนใจ","ยังไม่ได้ใช้ และยังไม่แน่ใจ"];
+const AI_TOOLS = ["Claude (Anthropic)","ChatGPT (OpenAI)","Gemini (Google)","Copilot (Microsoft)","Perplexity AI","AI อื่นๆ","ยังไม่ได้ใช้"];
+const WORK_TYPES = ["เขียน/แก้ไขเอกสาร/อีเมล/รายงาน","สรุปข้อมูลหรือวิเคราะห์เนื้อหา","ค้นหาข้อมูลและตอบคำถาม","สร้างโค้ด/Script/สูตร Excel","วางแผนงาน/สร้างแผนกลยุทธ์","สร้าง Presentation/เนื้อหา Marketing","งาน HR (JD, ประกาศรับสมัคร, สัญญา)","อื่นๆ"];
+const BARRIERS = ["ไม่รู้จะเริ่มต้นจากตรงไหน","ไม่มีเวลาเรียนรู้","กังวลเรื่องความปลอดภัยของข้อมูล","ไม่แน่ใจว่า AI จะเป็นประโยชน์กับงานตนเองไหม","ไม่มีเครื่องมือ/License ที่เหมาะสม","ขาดการสนับสนุนจากองค์กร","อื่นๆ"];
+const SUPPORT_NEEDS = ["อบรม AI เบื้องต้น (สำหรับผู้เริ่มต้น)","Workshop ใช้ AI กับงานเฉพาะแผนก","คู่มือ/Template Prompt สำหรับงานประจำ","Coaching แบบ 1-on-1","แหล่งเรียนรู้ออนไลน์","ไม่ต้องการการสนับสนุนเพิ่มเติม"];
+const TRAINING_FORMAT = ["Online ช่วงเช้า","Online ช่วงบ่าย","Onsite ที่ออฟฟิศ","Hybrid (Online + Onsite)","เรียนรู้ด้วยตนเองผ่าน LMS"];
+const SKILL_Q = ["เข้าใจว่า AI คืออะไร และทำงานอย่างไร","เขียน Prompt เพื่อสั่งงาน AI ได้อย่างมีประสิทธิภาพ","นำ AI มาใช้ในงานประจำวันได้","ตรวจสอบและปรับแต่ง Output ที่ AI สร้างขึ้นได้","แนะนำผู้อื่นในทีมให้ใช้ AI ได้"];
+const IMPACT_Q = ["AI ช่วยลดเวลาในการทำงานซ้ำซากได้","คุณภาพงานดีขึ้นเมื่อใช้ AI ช่วย","AI ช่วยให้ทำงานได้มากขึ้นในเวลาเดิม","รู้สึกมั่นใจมากขึ้นเมื่อมี AI เป็นเครื่องมือ","AI ช่วยให้เรียนรู้สิ่งใหม่ได้เร็วขึ้น"];
+const SCORING_DIMS = [
+  { key:"business", label:"ผลกระทบต่อธุรกิจ", hint:"ประหยัดเวลา/ต้นทุน หรือเพิ่มรายได้ได้มากแค่ไหน?",
+    scores:[{n:1,desc:"แทบไม่มีผล — ประหยัดเวลาไม่ถึง 30 นาที/วัน"},{n:2,desc:"ผลน้อย — ประหยัดได้ 30–60 นาที/วัน"},{n:3,desc:"ผลปานกลาง — ประหยัดได้ 1–2 ชั่วโมง/วัน"},{n:4,desc:"ผลมาก — ประหยัดได้ 2–4 ชั่วโมง/วัน"},{n:5,desc:"ผลสูงมาก — ประหยัดได้มากกว่า 4 ชั่วโมง/วัน"}]},
+  { key:"feasibility", label:"ความเป็นไปได้ของ AI", hint:"AI สามารถทำงานนี้ได้จริงไหม?",
+    scores:[{n:1,desc:"ยากมาก — ต้องใช้วิจารณญาณเชี่ยวชาญสูง"},{n:2,desc:"ยาก — ข้อมูลน้อย AI อาจทำพลาดบ่อย"},{n:3,desc:"พอทำได้ — AI ทำได้บางส่วน ต้องตรวจสอบมาก"},{n:4,desc:"ทำได้ดี — AI ทำได้ 70–80% ข้อมูลพร้อม"},{n:5,desc:"เหมาะมาก — งานซ้ำ รูปแบบชัด AI ทำได้แทบทั้งหมด"}]},
+  { key:"speed", label:"ความเร็วในการนำไปใช้", hint:"ถ้าจะเริ่มทดสอบวันนี้ ต้องรอนานแค่ไหน?",
+    scores:[{n:1,desc:"นานมาก > 6 เดือน — ต้องพัฒนาระบบใหม่ทั้งหมด"},{n:2,desc:"นาน 3–6 เดือน — ต้องเตรียมข้อมูล/License"},{n:3,desc:"ปานกลาง 2–3 เดือน — ต้องออกแบบ Workflow ใหม่"},{n:4,desc:"เร็ว 30–60 วัน — ใช้ Tools ที่มีได้เลย"},{n:5,desc:"เร็วมาก < 30 วัน — เริ่ม Pilot ได้ทันทีด้วย Prompt"}]},
+  { key:"crossGroup", label:"ผลกระทบข้ามกลุ่ม", hint:"หน่วยงานอื่นใน ASCG จะนำไปใช้ต่อได้ไหม?",
+    scores:[{n:1,desc:"ไม่มีเลย — เป็นปัญหาเฉพาะหน่วยงานนี้"},{n:2,desc:"น้อยมาก — ต้องปรับใหม่เยอะมาก"},{n:3,desc:"บ้าง — 1–2 หน่วยงานนำไปปรับใช้ได้"},{n:4,desc:"มาก — 3–5 หน่วยงานใช้ได้โดยตรง"},{n:5,desc:"ทั้งกลุ่ม — ทุกหน่วยงานใช้ได้ทันที"}]},
+];
+const STEPS = [
+  {title:"ข้อมูลพื้นฐาน",icon:"👤"},
+  {title:"การใช้งาน AI",icon:"🤖"},
+  {title:"ประเมินทักษะ",icon:"⭐"},
+  {title:"อุปสรรค & ความต้องการ",icon:"🎯"},
+  {title:"ปัญหาที่ต้องการให้ AI ช่วย",icon:"🔍"},
+  {title:"ข้อเสนอแนะ",icon:"💡"},
+];
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let step = 0;
+let form = {
+  name:"", unit:"", level:"",
+  aiFreq:"", aiTools:[], workTypes:[],
+  skills:[0,0,0,0,0], impacts:[0,0,0,0,0],
+  barriers:[], supportNeeds:[], trainingFormat:"",
+  problemName:"", problemDetail:"",
+  scoring:{business:0,feasibility:0,speed:0,crossGroup:0},
+  suggestions:""
+};
+let submitted = false;
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function h(tag, attrs={}, ...children) {
+  const el = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)) {
+    if (k==="class") el.className=v;
+    else if (k==="style") el.style.cssText=v;
+    else if (k.startsWith("on")) el[k]=v;
+    else el.setAttribute(k,v);
+  }
+  children.flat().forEach(c => {
+    if (c==null) return;
+    el.append(typeof c==="string" ? document.createTextNode(c) : c);
+  });
+  return el;
+}
+
+function radio(options, selected, onChange) {
+  return h("div",{class:"grid gap-2 mt-2"},
+    options.map(opt => {
+      const label = h("label",{class:`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${selected===opt?"border-blue-500 bg-blue-50":"border-slate-200 hover:border-blue-300 bg-white"}`},
+        h("div",{class:`w-5 h-5 mt-0.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selected===opt?"border-blue-600":"border-slate-300"}`},
+          selected===opt ? h("div",{class:"w-2.5 h-2.5 rounded-full bg-blue-600"}) : null
+        ),
+        h("span",{class:`text-sm leading-snug ${selected===opt?"text-blue-700 font-medium":"text-slate-600"}`}, opt)
+      );
+      label.onclick = () => { onChange(opt); render(); };
+      return label;
+    })
+  );
+}
+
+function checkbox(options, selected, onChange) {
+  return h("div",{class:"grid gap-2 mt-2"},
+    options.map(opt => {
+      const checked = selected.includes(opt);
+      const label = h("label",{class:`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${checked?"border-blue-500 bg-blue-50":"border-slate-200 hover:border-blue-300 bg-white"}`},
+        h("div",{class:`w-5 h-5 mt-0.5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${checked?"bg-blue-600 border-blue-600":"border-slate-300"}`},
+          checked ? h("svg",{class:"w-3 h-3",viewBox:"0 0 12 12",fill:"none"},
+            h("path",{d:"M2 6l3 3 5-5",stroke:"white","stroke-width":"2","stroke-linecap":"round"})
+          ) : null
+        ),
+        h("span",{class:`text-sm leading-snug ${checked?"text-blue-700 font-medium":"text-slate-600"}`}, opt)
+      );
+      label.onclick = () => { onChange(opt); render(); };
+      return label;
+    })
+  );
+}
+
+function starRating(label, value, onChange) {
+  const labels = ["","น้อยมาก","น้อย","ปานกลาง","มาก","มากที่สุด"];
+  const row = h("div",{class:"py-2"},
+    h("div",{class:"flex items-start gap-2 mb-1"},
+      h("span",{class:"text-sm text-slate-600 flex-1 leading-snug"}, label)
+    ),
+    h("div",{class:"flex items-center gap-1.5"},
+      ...[1,2,3,4,5].map(n => {
+        const btn = h("button",{class:`w-10 h-10 rounded-lg text-sm font-bold border-2 transition-all ${value===n?"bg-blue-600 border-blue-600 text-white shadow-lg":"bg-white border-slate-200 text-slate-400 hover:border-blue-400"}`}, String(n));
+        btn.onclick = () => { onChange(n); render(); };
+        return btn;
+      }),
+      h("span",{class:"text-xs text-slate-400 ml-1"}, value>0 ? labels[value] : "—")
+    )
+  );
+  return row;
+}
+
+function scoringDim(dim, value, onChange) {
+  const selectedScore = dim.scores.find(s=>s.n===value);
+  return h("div",{class:"mb-5"},
+    h("p",{class:"text-sm font-semibold text-slate-700 mb-0.5"}, dim.label),
+    h("p",{class:"text-xs text-slate-500 mb-3"}, dim.hint),
+    h("div",{class:"flex gap-2"},
+      ...dim.scores.map(({n,desc}) => {
+        const wrap = h("div",{class:"flex-1 relative group has-tooltip"});
+        const btn = h("button",{class:`w-full py-2.5 rounded-lg text-sm font-bold border-2 transition-all ${value===n?"bg-blue-600 border-blue-600 text-white shadow":"bg-white border-slate-200 text-slate-400 hover:border-blue-400"}`}, String(n));
+        btn.onclick = () => { onChange(n); render(); };
+        const tip = h("div",{class:"tooltip absolute bottom-full left-1/2 mb-2 z-10 pointer-events-none",style:"transform:translateX(-50%);min-width:180px;max-width:220px"},
+          h("div",{class:"bg-slate-800 text-white text-xs rounded-xl px-3 py-2 shadow-xl leading-relaxed"},
+            h("span",{class:"font-bold text-blue-300"}, n+" — "),
+            desc
+          ),
+          h("div",{style:"width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid #1e293b;margin:0 auto"})
+        );
+        wrap.append(btn, tip);
+        return wrap;
+      })
+    ),
+    value>0 ? h("div",{class:"mt-2 px-3 py-2 bg-white rounded-lg border border-blue-200 text-xs text-slate-600"},
+      h("span",{class:"font-semibold text-blue-600"}, `คะแนน ${value}: `),
+      selectedScore ? selectedScore.desc : ""
+    ) : null
+  );
+}
+
+// ══════════════════════════════════════════════
+// STEP RENDERERS
+// ══════════════════════════════════════════════
+function renderStep0() {
+  const nameInput = h("input",{class:"w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none",placeholder:"ชื่อของคุณ...",value:form.name});
+  nameInput.oninput = e => { form.name = e.target.value; };
+  return h("div",{class:"space-y-5"},
+    h("div",{},
+      h("label",{class:"block text-sm font-semibold text-slate-700 mb-1"}, "ชื่อ-นามสกุล ", h("span",{class:"text-slate-400 font-normal"},"(ไม่บังคับ)")),
+      nameInput
+    ),
+    h("div",{},
+      h("label",{class:"block text-sm font-semibold text-slate-700 mb-2"}, "หน่วยงานที่สังกัด ", h("span",{class:"text-red-500"},"*")),
+      radio(UNITS, form.unit, v => form.unit=v)
+    ),
+    h("div",{},
+      h("label",{class:"block text-sm font-semibold text-slate-700 mb-2"}, "ระดับตำแหน่ง ", h("span",{class:"text-red-500"},"*")),
+      radio(LEVELS, form.level, v => form.level=v)
+    )
+  );
+}
+
+function renderStep1() {
+  return h("div",{class:"space-y-6"},
+    h("div",{},
+      h("label",{class:"block text-sm font-semibold text-slate-700 mb-2"}, "ความถี่ในการใช้ AI ", h("span",{class:"text-red-500"},"*")),
+      radio(AI_FREQ, form.aiFreq, v => form.aiFreq=v)
+    ),
+    h("div",{},
+      h("label",{class:"block text-sm font-semibold text-slate-700 mb-2"}, "AI Tools ที่ใช้งาน ", h("span",{class:"text-slate-400 font-normal"},"(เลือกได้มากกว่า 1)")),
+      checkbox(AI_TOOLS, form.aiTools, v => {
+        form.aiTools = form.aiTools.includes(v) ? form.aiTools.filter(x=>x!==v) : [...form.aiTools,v];
+      })
+    ),
+    h("div",{},
+      h("label",{class:"block text-sm font-semibold text-slate-700 mb-2"}, "งานที่ใช้ AI ช่วย ", h("span",{class:"text-slate-400 font-normal"},"(เลือกได้มากกว่า 1)")),
+      checkbox(WORK_TYPES, form.workTypes, v => {
+        form.workTypes = form.workTypes.includes(v) ? form.workTypes.filter(x=>x!==v) : [...form.workTypes,v];
+      })
+    )
+  );
+}
+
+function renderStep2() {
+  return h("div",{class:"space-y-1"},
+    h("div",{class:"bg-blue-50 rounded-xl p-4 mb-4 text-sm text-blue-700"},
+      h("strong",{}, "เกณฑ์: "), "1 = น้อยมาก  |  3 = ปานกลาง  |  5 = มากที่สุด"
+    ),
+    h("p",{class:"text-sm font-semibold text-slate-700 mb-3"}, "ส่วน A — ประเมินทักษะ AI ของคุณ"),
+    ...SKILL_Q.map((q,i) => starRating(q, form.skills[i], v => { form.skills[i]=v; })),
+    h("div",{class:"h-px bg-slate-200 my-4"}),
+    h("p",{class:"text-sm font-semibold text-slate-700 mb-3"}, "ส่วน B — ผลกระทบของ AI ต่องานของคุณ"),
+    ...IMPACT_Q.map((q,i) => starRating(q, form.impacts[i], v => { form.impacts[i]=v; }))
+  );
+}
+
+function renderStep3() {
+  return h("div",{class:"space-y-6"},
+    h("div",{},
+      h("label",{class:"block text-sm font-semibold text-slate-700 mb-2"}, "อุปสรรคหลักในการใช้ AI ", h("span",{class:"text-slate-400 font-normal"},"(เลือกได้มากกว่า 1)")),
+      checkbox(BARRIERS, form.barriers, v => {
+        form.barriers = form.barriers.includes(v) ? form.barriers.filter(x=>x!==v) : [...form.barriers,v];
+      })
+    ),
+    h("div",{},
+      h("label",{class:"block text-sm font-semibold text-slate-700 mb-2"}, "การสนับสนุนที่ต้องการ ", h("span",{class:"text-slate-400 font-normal"},"(เลือกได้มากกว่า 1)")),
+      checkbox(SUPPORT_NEEDS, form.supportNeeds, v => {
+        form.supportNeeds = form.supportNeeds.includes(v) ? form.supportNeeds.filter(x=>x!==v) : [...form.supportNeeds,v];
+      })
+    ),
+    h("div",{},
+      h("label",{class:"block text-sm font-semibold text-slate-700 mb-2"}, "รูปแบบ Training ที่สะดวก"),
+      radio(TRAINING_FORMAT, form.trainingFormat, v => form.trainingFormat=v)
+    )
+  );
+}
+
+function renderStep4() {
+  const totalScore = calcTotal();
+  const pInfo = getPriority(totalScore);
+  const nameInput = h("input",{class:"w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none mt-1",placeholder:"เช่น การสรุป JD อัตโนมัติ, วิเคราะห์ Resume...",value:form.problemName});
+  nameInput.oninput = e => form.problemName=e.target.value;
+  const detailInput = h("textarea",{class:"w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none mt-1 resize-none",rows:"3",placeholder:"อธิบายปัญหาและสิ่งที่อยากให้ AI ช่วย..."});
+  detailInput.value = form.problemDetail;
+  detailInput.oninput = e => form.problemDetail=e.target.value;
+
+  const scoreAllFilled = Object.values(form.scoring).every(v=>v>0);
+  return h("div",{class:"space-y-5"},
+    h("div",{},
+      h("label",{class:"block text-sm font-semibold text-slate-700"}, "ชื่องาน / ปัญหาที่ต้องการให้ AI ช่วย"),
+      nameInput
+    ),
+    h("div",{},
+      h("label",{class:"block text-sm font-semibold text-slate-700"}, "รายละเอียด"),
+      detailInput
+    ),
+    h("div",{class:"bg-blue-50 rounded-xl p-4"},
+      h("p",{class:"text-sm font-bold text-blue-700 mb-1"}, "ASCG Problem Scoring Matrix"),
+      h("p",{class:"text-xs text-slate-500 mb-4"}, "วางเมาส์บนตัวเลขเพื่อดูคำอธิบาย"),
+      ...SCORING_DIMS.map(d => scoringDim(d, form.scoring[d.key], v => { form.scoring[d.key]=v; })),
+      scoreAllFilled ? h("div",{class:"mt-2 p-3 bg-white rounded-xl border-2 border-blue-200"},
+        h("div",{class:"flex items-center justify-between"},
+          h("span",{class:"text-sm font-bold text-slate-700"}, "คะแนนรวม:"),
+          h("span",{class:"text-2xl font-black text-blue-600"}, `${totalScore} / 5.0`)
+        ),
+        h("div",{class:`mt-2 px-3 py-2 rounded-lg border text-sm font-semibold ${pInfo.color}`},
+          `${pInfo.label} — ${pInfo.desc}`
+        )
+      ) : null
+    )
+  );
+}
+
+function renderStep5() {
+  const skillVals = form.skills.filter(v=>v>0);
+  const avgSkill = skillVals.length ? (skillVals.reduce((a,b)=>a+b,0)/skillVals.length).toFixed(1) : "-";
+  const textarea = h("textarea",{class:"w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none resize-none",rows:"5",placeholder:"แสดงความคิดเห็น ข้อเสนอแนะ หรือไอเดียของคุณได้เลย..."});
+  textarea.value = form.suggestions;
+  textarea.oninput = e => form.suggestions=e.target.value;
+  return h("div",{},
+    h("label",{class:"block text-sm font-semibold text-slate-700 mb-2"}, "ข้อเสนอแนะเกี่ยวกับการนำ AI มาใช้ใน ASCG"),
+    textarea,
+    h("div",{class:"mt-5 bg-slate-50 rounded-xl p-4 text-sm text-slate-500"},
+      h("p",{class:"font-semibold text-slate-700 mb-2"}, "สรุปคำตอบของคุณ"),
+      h("div",{class:"space-y-1"},
+        h("p",{}, "หน่วยงาน: ", h("strong",{class:"text-slate-700"}, form.unit||"-")),
+        h("p",{}, "ความถี่ใช้ AI: ", h("strong",{class:"text-slate-700"}, form.aiFreq||"-")),
+        h("p",{}, "ทักษะ AI เฉลี่ย: ", h("strong",{class:"text-blue-600"}, avgSkill)),
+        h("p",{}, "ปัญหาที่ระบุ: ", h("strong",{class:"text-slate-700"}, form.problemName||"(ไม่ได้ระบุ)"))
+      )
+    )
+  );
+}
+
+function renderSuccess() {
+  return h("div",{class:"text-center py-16 fade-in"},
+    h("div",{class:"w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-5"}, "✅"),
+    h("h2",{class:"text-2xl font-bold text-slate-800 mb-2"}, "ขอบคุณที่ตอบแบบสอบถาม!"),
+    h("p",{class:"text-slate-500 text-sm leading-relaxed"}, "คำตอบของคุณถูกบันทึกลง Google Sheets แล้ว", h("br",{}), "ข้อมูลจะถูกรวบรวมเพื่อพัฒนา AI Strategy ของ ASCG")
+  );
+}
+
+function renderSending() {
+  return h("div",{class:"text-center py-16 fade-in"},
+    h("div",{class:"w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-5",style:"animation:spin 1s linear infinite"}),
+    h("p",{class:"text-slate-600"}, "กำลังบันทึกข้อมูล...")
+  );
+}
+
+// ══════════════════════════════════════════════
+// CALC
+// ══════════════════════════════════════════════
+function calcTotal() {
+  const s = form.scoring;
+  return (s.business*0.4 + s.feasibility*0.3 + s.speed*0.2 + s.crossGroup*0.1).toFixed(2);
+}
+function getPriority(score) {
+  const n = parseFloat(score);
+  if (n >= 4.0) return { label:"Priority 1", color:"text-red-600 bg-red-50 border-red-200", desc:"อนุมัติ Pilot ทันที" };
+  if (n >= 2.5) return { label:"Priority 2", color:"text-amber-600 bg-amber-50 border-amber-200", desc:"คิวไตรมาสถัดไป" };
+  return { label:"Priority 3", color:"text-green-600 bg-green-50 border-green-200", desc:"บันทึกไว้ก่อน" };
+}
+
+// ══════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════
+function render() {
+  // Progress
+  const pb = document.getElementById("progressBar");
+  pb.innerHTML = "";
+  STEPS.forEach((s,i) => {
+    const circle = h("div",{class:`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all ${i<step?"bg-blue-600 text-white":i===step?"bg-blue-600 text-white ring-4 ring-blue-200":"bg-slate-200 text-slate-400"}`},
+      i<step?"✓":String(i+1)
+    );
+    pb.append(circle);
+    if (i<STEPS.length-1) {
+      pb.append(h("div",{class:`flex-1 h-1 mx-1 rounded ${i<step?"bg-blue-600":"bg-slate-200"}`}));
+    }
+  });
+
+  // Step label
+  const fc = document.getElementById("formCard");
+  fc.innerHTML = "";
+  const label = h("div",{class:"mb-5"},
+    h("span",{class:"text-xs font-semibold text-blue-500 uppercase tracking-widest"}, `${STEPS[step].icon} ส่วนที่ ${step+1}`),
+    h("h2",{class:"text-xl font-bold text-slate-800 mt-1"}, STEPS[step].title),
+    h("div",{class:"h-px bg-slate-200 mt-4"})
+  );
+  fc.append(label);
+
+  const body = [renderStep0,renderStep1,renderStep2,renderStep3,renderStep4,renderStep5][step]();
+  fc.append(body);
+
+  // Nav buttons
+  const nav = document.getElementById("navButtons");
+  nav.innerHTML = "";
+  if (step>0) {
+    const back = h("button",{class:"px-6 py-3 border-2 border-slate-200 text-slate-600 rounded-xl font-semibold hover:border-slate-300 transition-colors"}, "← ย้อนกลับ");
+    back.onclick = () => { step--; render(); window.scrollTo(0,0); };
+    nav.append(back);
+  }
+  if (step < STEPS.length-1) {
+    const next = h("button",{class:"flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"}, "ถัดไป →");
+    next.onclick = () => { step++; render(); window.scrollTo(0,0); };
+    nav.append(next);
+  } else {
+    const submit = h("button",{class:"flex-1 px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors shadow-lg shadow-green-200"}, "✓ ส่งแบบสอบถาม");
+    submit.onclick = submitForm;
+    nav.append(submit);
+  }
+}
+
+// ══════════════════════════════════════════════
+// SUBMIT → Google Sheets
+// ══════════════════════════════════════════════
+async function submitForm() {
+  const fc = document.getElementById("formCard");
+  const nav = document.getElementById("navButtons");
+  fc.innerHTML = "";
+  nav.innerHTML = "";
+  fc.append(renderSending());
+
+  const payload = {
+    ...form,
+    id: "r-" + Date.now(),
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    // Google Apps Script requires no-cors mode; use fetch with redirect follow
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    // no-cors = opaque response, assume success if no throw
+    fc.innerHTML = "";
+    fc.append(renderSuccess());
+  } catch (err) {
+    fc.innerHTML = "";
+    fc.append(
+      h("div",{class:"text-center py-12"},
+        h("div",{class:"text-4xl mb-3"}, "⚠️"),
+        h("p",{class:"font-semibold text-slate-700"}, "ส่งข้อมูลไม่สำเร็จ"),
+        h("p",{class:"text-sm text-slate-500 mt-1"}, err.message),
+        h("button",{class:"mt-4 px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700"}, "ลองอีกครั้ง")
+      )
+    );
+  }
+}
+
+// ── Spin animation ──────────────────────────────
+const style = document.createElement("style");
+style.textContent = "@keyframes spin{to{transform:rotate(360deg)}}";
+document.head.append(style);
+
+// ── Init ─────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
